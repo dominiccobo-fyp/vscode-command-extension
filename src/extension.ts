@@ -55,8 +55,6 @@ function getWorkItems(topic: string | undefined, upstream: string | undefined) {
 		let result = JSON.parse(data);
 	 	panel.webview.html += `<h2>${result.title}</h2> <div>${result.body}</div>`
 	});
-
-	ws.close();
 }
 
 class WorkItem {
