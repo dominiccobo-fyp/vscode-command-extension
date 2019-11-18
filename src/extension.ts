@@ -1,10 +1,17 @@
 import * as vscode from 'vscode';
+import WebSocket = require('ws');
 
 export function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('extension.contextCommands', () => {
-		vscode.window.showQuickPick(['Work Items', 'Experts'], {canPickMany: false, placeHolder: 'Pick one'}).then((s) => {
-			console.log(`User selected ${s}`);
-			fetchContextRequest(s);
+		vscode.window.showQuickPick(['Work Items'], {canPickMany: false, placeHolder: 'Pick one'}).then((s) => {
+			vscode.window.showInputBox({prompt: 'Input the upstream'}).then(upstream => {
+				getWorkItems(s, upstream);
+			},
+			() => {
+
+			} 
+			
+			
 		}, (f) => {
 			console.log(f);
 			vscode.window.showErrorMessage(`Could not retrieve ${f}`)
@@ -25,43 +32,35 @@ function getWorkspaceFolders() {
 	return listOfAllFoldersWithUri;
 }
 
-function getWorkItems() {
-	
-	let workItems = [
-		{
-			'title': 'Test',
-			'body': 'This is a comment on an issue\ntest'
-		},
-		{
-			'title': 'Test ABC',
-			'body': 'This is a comment on another issue\ntest'
-		},
-		{
-			'title': 'Test',
-			'body': 'This is a comment on an issue\ntest'
-		}
-	]
-	return workItems;
-}
+function getWorkItems(topic: string | undefined, upstream: string | undefined) {
 
-function fetchContextRequest(topic: string) {
+	const ws = new WebSocket('ws://localhost:8081/workItems');
+	let workItems: WorkItem[] = [];
 	let panel = vscode.window.createWebviewPanel('markdown.preview', `My ${topic}`, vscode.ViewColumn.Two, {enableFindWidget: true});
+	panel.webview.html = `<h1> ${topic}</h1>`
+	
+	var sampleContext = {
+        gitContext: {
+            remotes: {
+                "remote": upstream
+            }
+        }
+    };
 
-	if(topic === 'Work Items') {
-		panel.webview.html = `<h1> ${topic}</h1> ${formatWorkItems(getWorkItems())}`
-	}
-	else {
-		panel.webview.html = '<h1>Unknown topic</h1>'
-	}
+	ws.on('open', () => {
+		ws.send(JSON.stringify(sampleContext));
+	});
+	
+	ws.on('message', (data: string) => {
+		let result = JSON.parse(data);
+	 	panel.webview.html += `<h2>${result.title}</h2> <div>${result.body}</div>`
+	});
 
+	ws.close();
 }
 
-function formatWorkItems(workItems: [any]) {
-	let formattedDisplay = '';
-	workItems.forEach(element => {
-		formattedDisplay += `<h2>${element.title}</h2> <div>${element.body}</div>`
-	});
-	return formattedDisplay;
+class WorkItem {
+    constructor(title: string, body: string) {}
 }
 
 export function deactivate() {}
