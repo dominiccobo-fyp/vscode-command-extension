@@ -7,11 +7,9 @@ export function activate(context: vscode.ExtensionContext) {
 			vscode.window.showInputBox({prompt: 'Input the upstream'}).then(upstream => {
 				getWorkItems(s, upstream);
 			},
-			() => {
-
-			} 
-			
-			
+			(err) => {
+				console.error(err);
+			}); 
 		}, (f) => {
 			console.log(f);
 			vscode.window.showErrorMessage(`Could not retrieve ${f}`)
@@ -21,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 function getWorkspaceFolders() {
 
-	let listOfAllFoldersWithUri = '<ul></ul>'
+	let listOfAllFoldersWithUri = '<ul></ul>';
 	let folders = vscode.workspace.workspaceFolders;
 	if(folders !== undefined) {
 		folders.forEach(element => {
@@ -54,6 +52,10 @@ function getWorkItems(topic: string | undefined, upstream: string | undefined) {
 	ws.on('message', (data: string) => {
 		let result = JSON.parse(data);
 	 	panel.webview.html += `<h2>${result.title}</h2> <div>${result.body}</div>`
+	});
+
+	ws.on('error', (err) => {
+		// TODO; handle error...
 	});
 }
 
