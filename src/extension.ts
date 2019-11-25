@@ -2,42 +2,65 @@ import * as vscode from 'vscode';
 import WebSocket = require('ws');
 
 export function activate(context: vscode.ExtensionContext) {
-	let disposable = vscode.commands.registerCommand('extension.contextCommands', () => {
-		vscode.window.showQuickPick(['Work Items'], {canPickMany: false, placeHolder: 'Pick one'}).then((s) => {
-			vscode.window.showInputBox({prompt: 'Input the upstream'}).then(upstream => {
-				getWorkItems(s, upstream);
-			},
-			(err) => {
-				console.error(err);
-			}); 
-		}, (f) => {
-			console.log(f);
-			vscode.window.showErrorMessage(`Could not retrieve ${f}`)
-		});
-	});
-	context.subscriptions.push(disposable);
+    let disposable = vscode.commands.registerCommand('extension.contextCommands', () => {
+
+        vscode.window.showQuickPick(['Work Items', 'Experts'], {
+            canPickMany: false,
+            placeHolder: 'Pick one'
+        }).then((chosenTopic) => {
+            vscode.window.showInputBox({prompt: 'Input the upstream'}).then(chosenUpstream => {
+                    getItemsByTopic(chosenTopic, chosenUpstream)
+                },
+                (err) => {
+                    console.error(err);
+                });
+        }, (f) => {
+            console.log(f);
+            vscode.window.showErrorMessage(`Could not retrieve ${f}`)
+        });
+    });
+    context.subscriptions.push(disposable);
 }
+
 function getWorkspaceFolders() {
 
-	let listOfAllFoldersWithUri = '<ul></ul>';
-	let folders = vscode.workspace.workspaceFolders;
-	if(folders !== undefined) {
-		folders.forEach(element => {
-			listOfAllFoldersWithUri += `<li>${element.name} - ${element.uri}</li>`
-		});
-	}
+    let listOfAllFoldersWithUri = '<ul></ul>';
+    let folders = vscode.workspace.workspaceFolders;
+    if (folders !== undefined) {
+        folders.forEach(element => {
+            listOfAllFoldersWithUri += `<li>${element.name} - ${element.uri}</li>`
+        });
+    }
 
-	return listOfAllFoldersWithUri;
+    return listOfAllFoldersWithUri;
 }
 
-function getWorkItems(topic: string | undefined, upstream: string | undefined) {
+function getItemsByTopic(topic: String | undefined, upstream: string | undefined) {
+    switch (topic) {
+        case 'Work Items':
+            return getWorkItems(upstream);
+        case 'Experts':
+            return getExperts(upstream);
+    }
+}
 
-	const ws = new WebSocket('ws://localhost:8081/workItems');
-	let workItems: WorkItem[] = [];
-	let panel = vscode.window.createWebviewPanel('markdown.preview', `My ${topic}`, vscode.ViewColumn.Two, {enableFindWidget: true});
-	panel.webview.html = `<h1> ${topic}</h1>`
-	
-	var sampleContext = {
+function getExperts(upstream: string | undefined) {
+    let title = 'Experts';
+    let path = 'experts';
+    submitContextQuery(title, upstream, path);
+}
+
+function getWorkItems(upstream: string | undefined) {
+    let title = 'Work Items';
+    let path = 'workItems';
+    submitContextQuery(title, upstream, path);
+}
+
+function submitContextQuery(title: string, upstream: string | undefined, url: string) {
+    let panel = vscode.window.createWebviewPanel('markdown.preview', title, vscode.ViewColumn.Two, {enableFindWidget: true});
+    panel.webview.html = `<h1>${title}</h1>`;
+
+    let gitContext = {
         gitContext: {
             remotes: {
                 "remote": upstream
@@ -45,22 +68,21 @@ function getWorkItems(topic: string | undefined, upstream: string | undefined) {
         }
     };
 
-	ws.on('open', () => {
-		ws.send(JSON.stringify(sampleContext));
-	});
-	
-	ws.on('message', (data: string) => {
-		let result = JSON.parse(data);
-	 	panel.webview.html += `<h2>${result.title}</h2> <div>${result.body}</div>`
-	});
+    const ws = new WebSocket(`ws://localhost:8081/${url}`);
+    ws.on('open', () => {
+        ws.send(JSON.stringify(gitContext));
+    });
 
-	ws.on('error', (err) => {
-		// TODO; handle error...
-	});
+    ws.on('message', (markdownResponse: string) => {
+        console.log(markdownResponse);
+
+        panel.webview.html += markdownResponse;
+    });
+
+    ws.on('error', (err) => {
+        console.log(`Something went wrong whilst submitting the context query: ${err}`)
+    });
 }
 
-class WorkItem {
-    constructor(title: string, body: string) {}
+export function deactivate() {
 }
-
-export function deactivate() {}
