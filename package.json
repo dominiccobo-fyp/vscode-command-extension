@@ -1,6 +1,7 @@
 {
 	"name": "vscode-context-command",
 	"displayName": "vscode-context-command",
+	"publisher": "dominiccobo",
 	"description": "Context requesting interface",
 	"version": "0.0.1",
 	"engines": {
@@ -10,7 +11,7 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:extension.contextCommands"
+		"workspaceContains:**/.contextConfig"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -22,11 +23,13 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run compile",
+		"vscode:prepublish": "npm run downloadJar && npm run compile",
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",
 		"pretest": "npm run compile",
-		"test": "node ./out/test/runTest.js"
+		"test": "node ./out/test/runTest.js",
+		"downloadJar": "node downloadJar.js",
+		"build-extension": "vsce package"
 	},
 	"devDependencies": {
 		"@types/glob": "^7.1.1",
@@ -38,7 +41,8 @@
 		"mocha": "^6.2.2",
 		"tslint": "^5.20.0",
 		"typescript": "^3.6.4",
-		"vscode-test": "^1.2.2"
+		"vscode-test": "^1.2.2",
+		"request-promise-native": "latest"
 	},
 	"dependencies": {
 		"ws": "^7.2.0"

@@ -1,22 +1,47 @@
 import * as vscode from 'vscode';
 import WebSocket = require('ws');
+import process = require('process');
+const { spawn } = require('child_process');
 
 export function activate(context: vscode.ExtensionContext) {
-    let disposable = vscode.commands.registerCommand('extension.contextCommands', () => {
+    registerCommands(context);
+    startUpJavaServer();
+}
 
+function startUpJavaServer() {
+    var myExtDir = vscode.extensions.getExtension('dominiccobo.vscode-context-command').extensionPath;
+    var runCommand = 'java';
+    var spawnArgs = ['-jar', `${myExtDir}/server.jar`];
+    
+    const server = spawn(runCommand, spawnArgs);
+
+    server.stdout.on('data', (data: any) => {
+        console.log(`stdout: ${data}`);
+      });
+      
+      server.stderr.on('data', (data: any) => {
+        console.error(`stderr: ${data}`);
+      });
+      
+      server.on('close', (code: any) => {
+        console.log(`child process exited with code ${code}`);
+      });
+}
+
+function registerCommands(context: vscode.ExtensionContext) {
+    let disposable = vscode.commands.registerCommand('extension.contextCommands', () => {
         vscode.window.showQuickPick(['Work Items', 'Experts'], {
             canPickMany: false,
             placeHolder: 'Pick one'
         }).then((chosenTopic) => {
-            vscode.window.showInputBox({prompt: 'Input the upstream'}).then(chosenUpstream => {
-                    getItemsByTopic(chosenTopic, chosenUpstream)
-                },
-                (err) => {
-                    console.error(err);
-                });
+            vscode.window.showInputBox({ prompt: 'Input the upstream' }).then(chosenUpstream => {
+                getItemsByTopic(chosenTopic, chosenUpstream);
+            }, (err) => {
+                console.error(err);
+            });
         }, (f) => {
             console.log(f);
-            vscode.window.showErrorMessage(`Could not retrieve ${f}`)
+            vscode.window.showErrorMessage(`Could not retrieve ${f}`);
         });
     });
     context.subscriptions.push(disposable);
