@@ -1,0 +1,15 @@
+image: node:latest
+
+before_script:
+  - export SERVER_BUILD_VERSION='0.3.0'
+
+build:
+  stage: build
+  before_script:
+    - npm install
+    - npm run-script vscode:prepublish
+  script:
+    - npm run-script
+  artifacts:
+    paths:
+      - ./*.vsix
