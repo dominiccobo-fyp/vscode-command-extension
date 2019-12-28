@@ -9,7 +9,7 @@ build:
     - npm install
     - npm run-script vscode:prepublish
   script:
-    - npm run-script
+    - npm run-script build-extension
   artifacts:
     paths:
       - ./*.vsix
