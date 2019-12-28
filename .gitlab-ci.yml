@@ -6,6 +6,7 @@ build:
     SERVER_BUILD_VERSION: 0.3.0
   before_script:
     - npm install
+    - npm install -g vsce
     - npm run-script vscode:prepublish
   script:
     - npm run-script build-extension
