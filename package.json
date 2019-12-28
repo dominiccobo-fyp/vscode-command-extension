@@ -42,7 +42,8 @@
 		"tslint": "^5.20.0",
 		"typescript": "^3.6.4",
 		"vscode-test": "^1.2.2",
-		"request-promise-native": "latest"
+		"request": "2.88.0",
+		"request-promise-native": "1.0.8"
 	},
 	"dependencies": {
 		"ws": "^7.2.0"
