@@ -9,7 +9,9 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function startUpJavaServer() {
-    var myExtDir = vscode.extensions.getExtension('dominiccobo.vscode-context-command').extensionPath;
+    var allExtensions = vscode.extensions;
+    var myExt = allExtensions.getExtension('dominiccobo.vscode-context-command');
+    var myExtDir = myExt?.extensionPath;
     var runCommand = 'java';
     var spawnArgs = ['-jar', `${myExtDir}/server.jar`];
     
