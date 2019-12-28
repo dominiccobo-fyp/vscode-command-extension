@@ -1,10 +1,9 @@
 image: node:latest
 
-before_script:
-  - export SERVER_BUILD_VERSION='0.3.0'
-
 build:
   stage: build
+  variables:
+    SERVER_BUILD_VERSION: 0.3.0
   before_script:
     - npm install
     - npm run-script vscode:prepublish
