@@ -9,17 +9,12 @@ if(azureApiKey === undefined) {
     process.exit(-1);
 }
 
+const serverVersion = "0.3.0";
+
 let repositoryEnvVarKey = 'PROJECT_MAVEN_REPOSITORY';
 const repositoryUrl = process.env[repositoryEnvVarKey];
 if(repositoryUrl === undefined) {
     console.log(`Please set Repository URL Env Var:  '${repositoryEnvVarKey}'`);
-    process.exit(-1);
-}
-
-let serverBuildVerEnvVarKey = 'SERVER_BUILD_VERSION';
-let serverVersion = process.env[serverBuildVerEnvVarKey];
-if(serverVersion === undefined) {
-    console.log(`Please set desired version env var : ${serverBuildVerEnvVarKey}`);
     process.exit(-1);
 }
 
