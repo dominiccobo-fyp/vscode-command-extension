@@ -15,5 +15,4 @@ deploy:
   file: ./*.vsix
   draft: true
   on:
-    tags: true
     repo: dominiccobo-fyp/vscode-command-extension
