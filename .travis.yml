@@ -17,3 +17,4 @@ deploy:
   draft: true
   on:
     repo: dominiccobo-fyp/vscode-command-extension
+  skip_cleanup: true
