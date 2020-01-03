@@ -13,6 +13,7 @@ deploy:
   api_key:
     secure: Yb77kuDBqFc2haIOugphcjFnLTYo6Y+6PSTCbYkLqbXjhp4n19lwdcCfxRDpdHfyiDM5O0f91Id10s1D/1d7T3Pwzo5IA/xuHZOcJuABD7QjriwESfe6MHf69MP1TqIA6um4L1hZRqSf43T5z3nAYzWkbOy83siffBRsgF2i3vGIQKlxY9gKVX8tov89j2k6NJL3Xgixr7g5p9TH7JFJdAS6P4AEhlxBQRE6Kd4e6NTm9K1eY9X5ApPoVSmoDoYGi2itVl25ZhAeIjDo5HG2d+CEpR5hTYQSUKpZGmtJ5NAfUCx+CSRdF46k0g33/5qo6hzSBVU0WD1Ye4BcF46kNtUajrs8e/UeIPnAyBrIXMAvU8xZG6gB1MAWUV27Y+vO1Cz5SV+p9h9Znv7nsMfcpPxJzNmWaYHyS4kdrmREWtOUj78lg1pUxMKY/m3NrfadmTg2dYwVCizbZsO9ef+5r/ALfQoECrIFMMdSgo63RlxMx9Sn3hn0+KmTjiGMFCyihgOdqnNHx0yiLoTi0Pm3d+AyVHGp8W+K9j3ixCzuZp8I/KOEsaY/BeNA93IXSoNP9RiQUbySDNHYig2NpqsX/w4Uwixvl+h0Z+RZVMMDTlaBRAUoD8GbVis5rtY7LpoF5lc1lNGDm3mDUj1ieGgjxpiVaRpuvowbeL9jRzy1EFs=
   file: ./*.vsix
+  file_glob: true
   draft: true
   on:
     repo: dominiccobo-fyp/vscode-command-extension
