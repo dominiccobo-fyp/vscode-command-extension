@@ -2,8 +2,6 @@ dist: trusty
 language: node_js
 node_js:
 - 8
-env:
-- PROJECT_MAVEN_REPOSITORY=https://maven.pkg.github.com/dominiccobo-fyp
 install:
 - npm install
 - npm install -g vsce
