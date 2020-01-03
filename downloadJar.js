@@ -3,9 +3,16 @@ const fs = require("fs");
 const process = require("process");
 
 let azureAPIEnvVarKey = 'AZURE_ARTIFACTS_ENV_ACCESS_TOKEN';
-let azureApiKey = process.env['AZURE_ARTIFACTS_ENV_ACCESS_TOKEN'];
+const azureApiKey = process.env[azureAPIEnvVarKey];
 if(azureApiKey === undefined) {
     console.log(`Please set Artifact API Env Var:  '${azureAPIEnvVarKey}'`);
+    process.exit(-1);
+}
+
+let repositoryEnvVarKey = 'PROJECT_MAVEN_REPOSITORY';
+const repositoryUrl = process.env[repositoryEnvVarKey];
+if(repositoryUrl === undefined) {
+    console.log(`Please set Repository URL Env Var:  '${repositoryEnvVarKey}'`);
     process.exit(-1);
 }
 
@@ -34,7 +41,7 @@ function fetchArtifact(artifactApiKey, version) {
 
 function getAzureMavenResourceUrl(groupId, artifact, version) {
     let groupIdAsPath = transformGroupToPath(groupId); 
-    return `https://pkgs.dev.azure.com/1422016/_packaging/1422016/maven/v1/${groupIdAsPath}/${artifact}/${version}/${artifact}-${version}.jar`;
+    return `${repositoryUrl}/${groupIdAsPath}/${artifact}/${version}/${artifact}-${version}.jar`;
 }
 
 function transformGroupToPath(group) {
