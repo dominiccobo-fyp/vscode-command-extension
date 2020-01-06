@@ -8,12 +8,20 @@ export function activate(context: vscode.ExtensionContext) {
     startUpJavaServer();
 }
 
+function getConnectorConfiguration() {
+    var workspaceConfig = vscode.workspace.getConfiguration('vscode-context-command');
+    let connectorIp = workspaceConfig.get('connectorIP');
+    let connnectorPort = workspaceConfig.get('connectorPort');
+    return `${connectorIp}:${connnectorPort}`;
+}
+
+const SERVER_PORT = 30241;
+
 function startUpJavaServer() {
-    var allExtensions = vscode.extensions;
-    var myExt = allExtensions.getExtension('dominiccobo.vscode-context-command');
+    var myExt = getExtension();
     var myExtDir = myExt?.extensionPath;
     var runCommand = 'java';
-    var spawnArgs = ['-jar', `${myExtDir}/server.jar`];
+    var spawnArgs = ['-jar', `${myExtDir}/server.jar`, `--axon.axonserver.servers=${getConnectorConfiguration()}`, `--server.port=${SERVER_PORT}`];
     
     const server = spawn(runCommand, spawnArgs);
 
@@ -28,6 +36,12 @@ function startUpJavaServer() {
       server.on('close', (code: any) => {
         console.log(`child process exited with code ${code}`);
       });
+}
+
+function getExtension() {
+    var allExtensions = vscode.extensions;
+    var myExt = allExtensions.getExtension('dominiccobo.vscode-context-command');
+    return myExt;
 }
 
 function registerCommands(context: vscode.ExtensionContext) {
@@ -95,7 +109,7 @@ function submitContextQuery(title: string, upstream: string | undefined, url: st
         }
     };
 
-    const ws = new WebSocket(`ws://localhost:8081/${url}`);
+    const ws = new WebSocket(`ws://localhost:${SERVER_PORT}/${url}`);
     ws.on('open', () => {
         ws.send(JSON.stringify(gitContext));
     });

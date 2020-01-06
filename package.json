@@ -3,7 +3,7 @@
 	"displayName": "vscode-context-command",
 	"publisher": "dominiccobo",
 	"description": "Context requesting interface",
-	"version": "0.0.1",
+	"version": "0.3.0",
 	"engines": {
 		"vscode": "^1.40.0"
 	},
@@ -19,6 +19,23 @@
 			{
 				"command": "extension.contextCommands",
 				"title": "More info"
+			}
+		],
+		"configuration": [
+			{
+				"title": "Global Context Service",
+				"properties": {
+					"vscode-context-command.connectorPort": {
+						"type": "integer",
+						"default": 32024,
+						"description": "The port on which the connector runs."
+					},
+					"vscode-context-command.connectorIP": {
+						"type": "string",
+						"default": "192.168.99.100",
+						"description": "The host where the connector instance runs."
+					}
+				}
 			}
 		]
 	},
