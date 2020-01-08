@@ -19,12 +19,11 @@ export function activate(context: vscode.ExtensionContext) {
         // TODO: do something on ready...
         vscode.window.showWarningMessage('Disconnected from local client.');
     });
-    updateServerCache();
+
+    onServerReady(healthProbe, client);
 }
 
-async function updateServerCache() {
-    
-}
+
 
 function getConnectorConfiguration() {
     var workspaceConfig = vscode.workspace.getConfiguration('vscode-context-command');
@@ -33,6 +32,23 @@ function getConnectorConfiguration() {
     return `${connectorIp}:${connnectorPort}`;
 }
 
+function onServerReady(healthProbe: HealthProbe, localClient: LocalClient) { 
+    healthProbe.getEventEmitter().on(HealthProbe.READY, () => {
+        updateServerCache(healthProbe, localClient);
+    });
+}
+
+function updateServerCache(healthProbe: HealthProbe, localClient: LocalClient) {
+    let uriOfFoldersInWorkspace = getWorkspaceFolders();
+
+    request.put({ 
+        uri: `http://${localClient.getLocalServerUrl()}/workspace/cache/upstream`, 
+        body: {
+           "folderUris": uriOfFoldersInWorkspace
+        },
+        json: true
+    });
+}
 
 class LocalClient {
 
@@ -152,16 +168,13 @@ function getExtension() {
 
 
 function getWorkspaceFolders() {
-
-    let listOfAllFoldersWithUri = '<ul></ul>';
+    let workspaceFolders: string[] = [];
     let folders = vscode.workspace.workspaceFolders;
     if (folders !== undefined) {
-        folders.forEach(element => {
-            listOfAllFoldersWithUri += `<li>${element.name} - ${element.uri}</li>`;
-        });
+        folders.forEach(element => workspaceFolders.push(element.uri.toString()));
     }
 
-    return listOfAllFoldersWithUri;
+    return workspaceFolders;
 }
 
 class QueryDispatcher {

@@ -3,7 +3,7 @@
 	"displayName": "vscode-context-command",
 	"publisher": "dominiccobo",
 	"description": "Context requesting interface",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"engines": {
 		"vscode": "^1.40.0"
 	},
@@ -27,7 +27,7 @@
 				"properties": {
 					"vscode-context-command.connectorPort": {
 						"type": "integer",
-						"default": 32024,
+						"default": 31024,
 						"description": "The port on which the connector runs."
 					},
 					"vscode-context-command.connectorIP": {
