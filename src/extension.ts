@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import WebSocket = require('ws');
-import process = require('process');
-const { spawn } = require('child_process');
 import * as request from 'request-promise-native';
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
+
+
+const { spawn } = require('child_process');
 
 export function activate(context: vscode.ExtensionContext) {
-    
+
     const client = new LocalClient();
     const queryDispatcher = new QueryDispatcher(client, context);
     const healthProbe = new HealthProbe(client);
@@ -32,7 +32,7 @@ function getConnectorConfiguration() {
     return `${connectorIp}:${connnectorPort}`;
 }
 
-function onServerReady(healthProbe: HealthProbe, localClient: LocalClient) { 
+function onServerReady(healthProbe: HealthProbe, localClient: LocalClient) {
     healthProbe.getEventEmitter().on(HealthProbe.READY, () => {
         updateServerCache(healthProbe, localClient);
     });
@@ -41,8 +41,8 @@ function onServerReady(healthProbe: HealthProbe, localClient: LocalClient) {
 function updateServerCache(healthProbe: HealthProbe, localClient: LocalClient) {
     let uriOfFoldersInWorkspace = getWorkspaceFolders();
 
-    request.put({ 
-        uri: `http://${localClient.getLocalServerUrl()}/workspace/cache/upstream`, 
+    request.put({
+        uri: `http://${localClient.getLocalServerUrl()}/workspace/cache/upstream`,
         body: {
            "folderUris": uriOfFoldersInWorkspace
         },
@@ -126,7 +126,7 @@ class HealthProbe {
                 let newStatus = '';
                 if (res) { newStatus = HealthProbe.READY; }
                 else { newStatus = HealthProbe.DOWN; }
-    
+
                 if (newStatus !== this.currentStatus) {
                     this.eventEmitter.emit(newStatus);
                     this.currentStatus = newStatus;
@@ -180,34 +180,36 @@ function getWorkspaceFolders() {
 class QueryDispatcher {
 
     constructor(private client: LocalClient, private context: vscode.ExtensionContext) {
-        this.registerCommands(context); 
+        this.registerCommands(context);
     }
 
     registerCommands(context: vscode.ExtensionContext) {
         let disposable = vscode.commands.registerCommand('extension.contextCommands', () => {
-            vscode.window.showQuickPick(['Work Items', 'Experts'], {
-                canPickMany: false,
-                placeHolder: 'Pick one'
-            }).then((chosenTopic) => {
-                vscode.window.showInputBox({ prompt: 'Input the upstream' }).then(chosenUpstream => {
-                    this.getItemsByTopic(chosenTopic, chosenUpstream);
-                }, (err) => {
-                    console.error(err);
-                });
-            }, (f) => {
-                console.log(f);
-                vscode.window.showErrorMessage(`Could not retrieve ${f}`);
+
+            let dialog = this.showQueryTopicDialog();
+            dialog.then((topic) => {
+                let workspaceFolders = getWorkspaceFolders();
+                if ((workspaceFolders.length == 1)) {
+                    console.log(`Retrieving ${topic} for ${workspaceFolders}`);
+                    this.getItemsByTopic(topic, workspaceFolders[0]);
+                }
+                else {
+                    this.showFolderChoiceDialog().then(folder => {
+                        console.log(`Retrieving ${topic} for ${folder}`);
+                        this.getItemsByTopic(topic, folder);
+                    });
+                }
             });
         });
         context.subscriptions.push(disposable);
     }
 
-    getItemsByTopic(topic: String | undefined, upstream: string | undefined) {
+    getItemsByTopic(topic: String | undefined, folderUri: string | undefined) {
         switch (topic) {
             case 'Work Items':
-                return this.getWorkItems(upstream);
+                return this.getWorkItems(folderUri);
             case 'Experts':
-                return this.getExperts(upstream);
+                return this.getExperts(folderUri);
         }
     }
 
@@ -223,32 +225,47 @@ class QueryDispatcher {
         this.submitContextQuery(title, upstream, path);
     }
 
-    submitContextQuery(title: string, upstream: string | undefined, url: string) {
+    async showQueryTopicDialog() {
+        return vscode.window.showQuickPick(['Work Items', 'Experts'], {
+            canPickMany: false,
+            placeHolder: 'Pick one'
+        });
+    }
+
+    showFolderChoiceDialog() {
+        const folders = getWorkspaceFolders();
+
+        return vscode.window.showQuickPick(folders, {
+            canPickMany: false,
+            placeHolder: 'Pick a folder to query for'
+        });
+    }
+
+    submitContextQuery(title: string, folderUri: string | undefined, url: string) {
         let panel = vscode.window.createWebviewPanel('markdown.preview', title, vscode.ViewColumn.Two, { enableFindWidget: true });
-        panel.webview.html = `<h1>${title}</h1>`;
-    
-        let gitContext = {
-            gitContext: {
-                remotes: {
-                    "remote": upstream
-                }
+
+        request.get(`http://${this.client.getLocalServerUrl()}/${url}?uri=${folderUri}`).then(result => {
+            let parsedResult = JSON.parse(result);
+            if(parsedResult.length < 1) {
+                panel.webview.html = `<h1>${title}</h1>`;
+                panel.webview.html += 'Looking for results. If there are no results, please try again later.';
             }
-        };
-    
-        const ws = new WebSocket(`ws://${this.client.getLocalServerUrl()}/${url}`);
-        ws.on('open', () => {
-            ws.send(JSON.stringify(gitContext));
+            else {
+                panel.webview.html = `<h1>${title}</h1>`;
+                panel.webview.html += this.formatWorkItems(parsedResult);
+            }
         });
-    
-        ws.on('message', (markdownResponse: string) => {
-            console.log(markdownResponse);
-    
-            panel.webview.html += markdownResponse;
+
+
+        
+    }
+
+    formatWorkItems(workItemsResponse: [{title: string, body: string}]): string {
+        let dom = "";
+        workItemsResponse.forEach((entry: { title: any; body: any; }) => {
+            dom += `<h2>${entry.title}</h2><p>${entry.body}</p>`;
         });
-    
-        ws.on('error', (err) => {
-            console.log(`Something went wrong whilst submitting the context query: ${err}`);
-        });
+        return dom;
     }
 
 }
