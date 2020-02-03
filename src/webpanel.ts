@@ -43,6 +43,7 @@ export class WebPanel {
                 <h2 id="page"></h2>
             </body>
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
             <script type="text/javascript" src="${scriptUri}" nonce="${this.getNonce()}"></script>
         </html>`;
     }

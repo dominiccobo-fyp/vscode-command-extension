@@ -5,6 +5,8 @@ let currentIdentifier;
 
 // noinspection JSUnresolvedFunction
 const vscode = acquireVsCodeApi();
+// noinspection JSUnresolvedVariable,JSUnresolvedFunction
+const converter = new showdown.Converter();
 
 window.addEventListener('message', event => {
     const message = event.data; // The json data that the extension sent
@@ -51,7 +53,7 @@ let getContent = function(serverHost, resource, identifier) {
             $('#content').show();
             data.forEach(item => {
                 $('#content').append(`<h1>${item.title}</h1>`);
-                $('#content').append(`<p>${item.body}</p>`);
+                $('#content').append(`<div>${converter.makeHtml(item.body)}</div>`);
             });
         }
     });
