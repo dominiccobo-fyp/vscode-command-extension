@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import * as request from 'request-promise-native';
 import {EventEmitter} from 'events';
+import {WebPanel} from "./webpanel";
 
 
-const { spawn } = require('child_process');
+const {spawn} = require('child_process');
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -12,7 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
     const healthProbe = new HealthProbe(client);
     healthProbe.getEventEmitter().on(HealthProbe.READY, () => {
         // TODO: do something on ready...
-        vscode.window.showInformationMessage('Connected to local client', );
+        vscode.window.showInformationMessage('Connected to local client',);
     });
 
     healthProbe.getEventEmitter().on(HealthProbe.DOWN, () => {
@@ -22,7 +23,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     onServerReady(healthProbe, client);
 }
-
 
 
 function getConnectorConfiguration() {
@@ -44,7 +44,7 @@ function updateServerCache(healthProbe: HealthProbe, localClient: LocalClient) {
     request.put({
         uri: `http://${localClient.getLocalServerUrl()}/workspace/cache/upstream`,
         body: {
-           "folderUris": uriOfFoldersInWorkspace
+            "folderUris": uriOfFoldersInWorkspace
         },
         json: true
     });
@@ -106,7 +106,7 @@ class HealthProbe {
     private currentStatus: string = 'DOWN';
 
     constructor(private client: LocalClient) {
-        this.start() ;
+        this.start();
     }
 
     private start() {
@@ -122,16 +122,19 @@ class HealthProbe {
     private startServerLivenessCheck() {
         setInterval(() => {
             this.isServerUp()
-            .then(res => {
-                let newStatus = '';
-                if (res) { newStatus = HealthProbe.READY; }
-                else { newStatus = HealthProbe.DOWN; }
+                .then(res => {
+                    let newStatus = '';
+                    if (res) {
+                        newStatus = HealthProbe.READY;
+                    } else {
+                        newStatus = HealthProbe.DOWN;
+                    }
 
-                if (newStatus !== this.currentStatus) {
-                    this.eventEmitter.emit(newStatus);
-                    this.currentStatus = newStatus;
-                }
-            });
+                    if (newStatus !== this.currentStatus) {
+                        this.eventEmitter.emit(newStatus);
+                        this.currentStatus = newStatus;
+                    }
+                });
         }, 3000);
     }
 
@@ -140,12 +143,11 @@ class HealthProbe {
         let url = this.client.getLocalServerUrl();
 
         try {
-            let response = await request.get({ uri: `http://${url}/actuator/health` });
+            let response = await request.get({uri: `http://${url}/actuator/health`});
             if (this.isResponseHealthy(response)) {
                 return true;
             }
-        }
-        catch(err) {
+        } catch (err) {
             return false;
         }
         return false;
@@ -164,7 +166,6 @@ function getExtension() {
     var myExt = allExtensions.getExtension('dominiccobo.vscode-context-command');
     return myExt;
 }
-
 
 
 function getWorkspaceFolders() {
@@ -189,11 +190,10 @@ class QueryDispatcher {
             let dialog = this.showQueryTopicDialog();
             dialog.then((topic) => {
                 let workspaceFolders = getWorkspaceFolders();
-                if ((workspaceFolders.length == 1)) {
+                if ((workspaceFolders.length === 1)) {
                     console.log(`Retrieving ${topic} for ${workspaceFolders}`);
                     this.getItemsByTopic(topic, workspaceFolders[0]);
-                }
-                else {
+                } else {
                     this.showFolderChoiceDialog().then(folder => {
                         console.log(`Retrieving ${topic} for ${folder}`);
                         this.getItemsByTopic(topic, folder);
@@ -241,31 +241,21 @@ class QueryDispatcher {
         });
     }
 
-    submitContextQuery(title: string, folderUri: string | undefined, url: string) {
-        let panel = vscode.window.createWebviewPanel('markdown.preview', title, vscode.ViewColumn.Two, { enableFindWidget: true });
-
-        request.get(`http://${this.client.getLocalServerUrl()}/${url}?uri=${folderUri}`).then(result => {
-            let parsedResult = JSON.parse(result);
-            if(parsedResult.length < 1) {
-                panel.webview.html = `<h1>${title}</h1>`;
-                panel.webview.html += 'Looking for results. If there are no results, please try again later.';
-            }
-            else {
-                panel.webview.html = `<h1>${title}</h1>`;
-                panel.webview.html += this.formatWorkItems(parsedResult);
-            }
-        });
-
-
-        
-    }
-
-    formatWorkItems(workItemsResponse: [{title: string, body: string}]): string {
-        let dom = "";
-        workItemsResponse.forEach((entry: { title: any; body: any; }) => {
-            dom += `<h2>${entry.title}</h2><p>${entry.body}</p>`;
-        });
-        return dom;
+    submitContextQuery(title: string, folderUri: string | undefined, resource: string) {
+        let myExt = getExtension();
+        let myExtDir = myExt?.extensionPath;
+        if (myExtDir !== undefined) {
+            let panel = new WebPanel(myExtDir);
+            let url = `localhost:${LocalClient.port}`;
+            panel.panel.webview.postMessage(
+                {
+                    command: 'search',
+                    serverHost: url,
+                    resource: resource,
+                    folderUri: folderUri
+                }
+            );
+        }
     }
 
 }

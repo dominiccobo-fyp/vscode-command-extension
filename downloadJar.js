@@ -9,7 +9,7 @@ if(azureApiKey === undefined) {
     process.exit(-1);
 }
 
-const serverVersion = "0.7.0";
+const serverVersion = "0.8.1";
 
 let repositoryEnvVarKey = 'PROJECT_MAVEN_REPOSITORY';
 const repositoryUrl = process.env[repositoryEnvVarKey];

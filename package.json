@@ -3,7 +3,7 @@
 	"displayName": "vscode-context-command",
 	"publisher": "dominiccobo",
 	"description": "Context requesting interface",
-	"version": "0.7.0",
+	"version": "0.8.1",
 	"engines": {
 		"vscode": "^1.40.0"
 	},
