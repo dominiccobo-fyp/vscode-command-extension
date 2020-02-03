@@ -44,7 +44,7 @@ let getContent = function(serverHost, resource, identifier) {
     $.getJSON({
         url: url,
         success: (data, status) => {
-            if(data.size() > 0) {
+            if(data.length > 0) {
                 currentPage++;
             }
             $('#content').hide();
