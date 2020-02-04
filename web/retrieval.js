@@ -51,10 +51,30 @@ let getContent = function(serverHost, resource, identifier) {
             }
             $('#content').hide();
             $('#content').show();
-            data.forEach(item => {
-                $('#content').append(`<h1>${item.title}</h1>`);
-                $('#content').append(`<div>${converter.makeHtml(item.body)}</div>`);
-            });
+            switch (resource) {
+                case 'experts': {
+                    data.forEach(item => {
+                        $('#content').append(`<h1>${item.expertName}</h1>`);
+                        $('#content').append('<h2>Contact Details</h2>')
+                        item.contactDetails.forEach(detail=> {
+                            $('#content').append(`<p>${detail.meansName}: ${detail.details}</p>`);
+                        });
+                        $('#content').append('<h2>Expertise</h2>')
+                        item.expertTopics.forEach(topic => {
+                            $('#content').append(`<p>${topic.topicName}: ${topic.description}</p>`);
+                        });
+                    });
+                    break;
+                }
+                case 'workItems': {
+
+                    data.forEach(item => {
+                        $('#content').append(`<h1>${item.title}</h1>`);
+                        $('#content').append(`<div>${converter.makeHtml(item.body)}</div>`);
+                    });
+                    break;
+                }
+            }
         }
     });
 };
