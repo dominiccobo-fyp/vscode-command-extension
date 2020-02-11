@@ -16,5 +16,6 @@ deploy:
   file_glob: true
   draft: true
   on:
+    all_branches: true
     repo: dominiccobo-fyp/vscode-command-extension
   skip_cleanup: true

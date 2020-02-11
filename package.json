@@ -3,7 +3,7 @@
 	"displayName": "vscode-context-command",
 	"publisher": "dominiccobo",
 	"description": "Context requesting interface",
-	"version": "0.8.4",
+	"version": "0.9.0",
 	"engines": {
 		"vscode": "^1.40.0"
 	},
@@ -17,10 +17,30 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "extension.contextCommands",
-				"title": "More info"
+				"command": "extension.showAssociatedExperts",
+				"title": "Experts",
+				"category": "Global Context Service"
+			},
+			{
+				"command": "extension.showAssociatedWorkItems",
+				"title": "Work Items",
+				"category": "Global Context Service"
+			},
+			{
+				"command": "extension.documentationQA",
+				"title": "Find related questions",
+				"category": "Global Context Service"
 			}
 		],
+		"menus": {
+			"editor/context": [
+				{
+					"when": "editorHasSelection",
+					"command": "extension.documentationQA",
+					"group": "navigation"
+				}
+			]
+		},
 		"configuration": [
 			{
 				"title": "Global Context Service",
@@ -52,16 +72,16 @@
 		"@types/glob": "^7.1.1",
 		"@types/mocha": "^5.2.7",
 		"@types/node": "^12.11.7",
+		"@types/request-promise-native": "1.0.17",
 		"@types/vscode": "^1.40.0",
 		"@types/ws": "^6.0.3",
 		"glob": "^7.1.5",
 		"mocha": "^6.2.2",
-		"tslint": "^5.20.0",
-		"typescript": "^3.6.4",
-		"vscode-test": "^1.2.2",
 		"request": "2.88.0",
 		"request-promise-native": "1.0.8",
-		"@types/request-promise-native": "1.0.17"
+		"tslint": "^5.20.0",
+		"typescript": "^3.6.4",
+		"vscode-test": "^1.2.2"
 	},
 	"dependencies": {
 		"ws": "^7.2.0",

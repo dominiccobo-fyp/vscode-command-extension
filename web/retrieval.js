@@ -8,18 +8,46 @@ const vscode = acquireVsCodeApi();
 // noinspection JSUnresolvedVariable,JSUnresolvedFunction
 const converter = new showdown.Converter();
 
-window.addEventListener('message', event => {
+window.addEventListener('message', (event) => {
     const message = event.data; // The json data that the extension sent
     switch (message.command) {
         case 'search':
-            let serverHost = message.serverHost;
-            let resource = message.resource;
-            let folderUri = message.folderUri;
+            const serverHost = message.serverHost;
+            const resource = message.resource;
+            const folderUri = message.folderUri;
             return startFetch(serverHost, resource, folderUri);
+
+        case 'findDocumentation': {
+            const serverHost = message.serverHost;
+            const folderUri = message.folderUri;
+            const queryTerm = message.queryTerm;
+            return startDocumentationRetrieval(serverHost, folderUri, queryTerm);
+        }
     }
 });
 
-let startFetch = function(serverHost, resource, folderUri) {
+const startDocumentationRetrieval = function (serverHost, folderUri, queryTerm) {
+    const url = `http://${serverHost}/documentation?uri=${folderUri}&query="${queryTerm}"`;
+    currentServerHost = serverHost;
+    currentResource = 'documentation';
+    console.log(url);
+    $.getJSON({
+        url: url,
+        success: (data, status) => {
+            currentIdentifier = data.identifier;
+            console.log(currentIdentifier);
+            setTimeout(() => {
+                getContent(serverHost, 'documentation', currentIdentifier);
+            }, 2000);
+        },
+        error: (error) => {
+            console.log(error);
+        },
+    });
+};
+
+
+const startFetch = function (serverHost, resource, folderUri) {
     const url = `http://${serverHost}/${resource}?uri=${folderUri}`;
     currentServerHost = serverHost;
     currentResource = resource;
@@ -40,8 +68,8 @@ let startFetch = function(serverHost, resource, folderUri) {
     });
 };
 
-let getContent = function(serverHost, resource, identifier) {
-    $('#page').text(currentPage);
+$('#page').text(currentPage);
+const getContent = function (serverHost, resource, identifier) {
     const url = `http://${serverHost}/${resource}/${identifier}?page=${currentPage}`;
     $.getJSON({
         url: url,
@@ -53,29 +81,19 @@ let getContent = function(serverHost, resource, identifier) {
             $('#content').show();
             switch (resource) {
                 case 'experts': {
-                    data.forEach(item => {
-                        $('#content').append(`<h1>${item.expertName}</h1>`);
-                        $('#content').append('<h2>Contact Details</h2>')
-                        item.contactDetails.forEach(detail=> {
-                            $('#content').append(`<p>${detail.meansName}: ${detail.details}</p>`);
-                        });
-                        $('#content').append('<h2>Expertise</h2>')
-                        item.expertTopics.forEach(topic => {
-                            $('#content').append(`<p>${topic.topicName}: ${topic.description}</p>`);
-                        });
-                    });
+                    displayExpertsResults(data);
                     break;
                 }
                 case 'workItems': {
-
-                    data.forEach(item => {
-                        $('#content').append(`<h1>${item.title}</h1>`);
-                        $('#content').append(`<div>${converter.makeHtml(item.body)}</div>`);
-                    });
+                    displayWorkItemsResults(data);
+                    break;
+                }
+                case 'documentation': {
+                    displayDocumentationResults(data);
                     break;
                 }
             }
-        }
+        },
     });
 };
 
@@ -84,3 +102,31 @@ $(window).scroll(function () {
         getContent(currentServerHost, currentResource, currentIdentifier);
     }
 });
+
+function displayExpertsResults(data) {
+    data.forEach(item => {
+        $('#content').append(`<h1>${item.expertName}</h1>`);
+        $('#content').append('<h2>Contact Details</h2>');
+        item.contactDetails.forEach(detail => {
+            $('#content').append(`<p>${detail.meansName}: ${detail.details}</p>`);
+        });
+        $('#content').append('<h2>Expertise</h2>');
+        item.expertTopics.forEach(topic => {
+            $('#content').append(`<p>${topic.topicName}: ${topic.description}</p>`);
+        });
+    });
+}
+
+function displayWorkItemsResults(data) {
+    data.forEach(item => {
+        $('#content').append(`<h1>${item.title}</h1>`);
+        $('#content').append(`<div>${converter.makeHtml(item.body)}</div>`);
+    });
+}
+
+function displayDocumentationResults(data) {
+    data.forEach((item) => {
+        $('#content').append(`<h1><a href="${item.link}">${item.title}</a></h1>`);
+        $('#content').append(`<div>${item.content.replace(/\n/g, '<br/>')}</div>`);
+    });
+}

@@ -1,19 +1,19 @@
-import * as vscode from 'vscode';
+import { EventEmitter } from 'events';
 import * as request from 'request-promise-native';
-import {EventEmitter} from 'events';
-import {WebPanel} from "./webpanel";
+import * as vscode from 'vscode';
+import { WebPanel } from './webpanel';
+import { spawn } from 'child_process';
+import { Commands, getWorkspaceFolders } from './Commands';
 
-
-const {spawn} = require('child_process');
 
 export function activate(context: vscode.ExtensionContext) {
 
     const client = new LocalClient();
-    const queryDispatcher = new QueryDispatcher(client, context);
+    new Commands(`localhost:${LocalClient.port}`, context).registerCommands();
     const healthProbe = new HealthProbe(client);
     healthProbe.getEventEmitter().on(HealthProbe.READY, () => {
         // TODO: do something on ready...
-        vscode.window.showInformationMessage('Connected to local client',);
+        vscode.window.showInformationMessage('Connected to local client');
     });
 
     healthProbe.getEventEmitter().on(HealthProbe.DOWN, () => {
@@ -50,8 +50,7 @@ function updateServerCache(healthProbe: HealthProbe, localClient: LocalClient) {
     });
 }
 
-class LocalClient {
-
+export class LocalClient {
     static port: number = 30241;
 
     constructor() {
@@ -78,6 +77,9 @@ class LocalClient {
     private registerProcessCloseHandler(server: any) {
         server.on('close', (code: any) => {
             console.log(`child process exited with code ${code}`);
+            if(code === 1) {
+                vscode.window.showWarningMessage("Server was already running. Using existing instance.");
+            }
         });
     }
 
@@ -99,7 +101,6 @@ class LocalClient {
 }
 
 class HealthProbe {
-
     private eventEmitter: EventEmitter = new EventEmitter();
     public static READY: string = 'READY';
     public static DOWN: string = 'DOWN';
@@ -143,7 +144,7 @@ class HealthProbe {
         let url = this.client.getLocalServerUrl();
 
         try {
-            let response = await request.get({uri: `http://${url}/actuator/health`});
+            let response = await request.get({ uri: `http://${url}/actuator/health` });
             if (this.isResponseHealthy(response)) {
                 return true;
             }
@@ -161,103 +162,10 @@ class HealthProbe {
 }
 
 
-function getExtension() {
+export function getExtension() {
     var allExtensions = vscode.extensions;
     var myExt = allExtensions.getExtension('dominiccobo.vscode-context-command');
     return myExt;
-}
-
-
-function getWorkspaceFolders() {
-    let workspaceFolders: string[] = [];
-    let folders = vscode.workspace.workspaceFolders;
-    if (folders !== undefined) {
-        folders.forEach(element => workspaceFolders.push(element.uri.toString()));
-    }
-
-    return workspaceFolders;
-}
-
-class QueryDispatcher {
-
-    constructor(private client: LocalClient, private context: vscode.ExtensionContext) {
-        this.registerCommands(context);
-    }
-
-    registerCommands(context: vscode.ExtensionContext) {
-        let disposable = vscode.commands.registerCommand('extension.contextCommands', () => {
-
-            let dialog = this.showQueryTopicDialog();
-            dialog.then((topic) => {
-                let workspaceFolders = getWorkspaceFolders();
-                if ((workspaceFolders.length === 1)) {
-                    console.log(`Retrieving ${topic} for ${workspaceFolders}`);
-                    this.getItemsByTopic(topic, workspaceFolders[0]);
-                } else {
-                    this.showFolderChoiceDialog().then(folder => {
-                        console.log(`Retrieving ${topic} for ${folder}`);
-                        this.getItemsByTopic(topic, folder);
-                    });
-                }
-            });
-        });
-        context.subscriptions.push(disposable);
-    }
-
-    getItemsByTopic(topic: String | undefined, folderUri: string | undefined) {
-        switch (topic) {
-            case 'Work Items':
-                return this.getWorkItems(folderUri);
-            case 'Experts':
-                return this.getExperts(folderUri);
-        }
-    }
-
-    getExperts(upstream: string | undefined) {
-        let title = 'Experts';
-        let path = 'experts';
-        this.submitContextQuery(title, upstream, path);
-    }
-
-    getWorkItems(upstream: string | undefined) {
-        let title = 'Work Items';
-        let path = 'workItems';
-        this.submitContextQuery(title, upstream, path);
-    }
-
-    async showQueryTopicDialog() {
-        return vscode.window.showQuickPick(['Work Items', 'Experts'], {
-            canPickMany: false,
-            placeHolder: 'Pick one'
-        });
-    }
-
-    showFolderChoiceDialog() {
-        const folders = getWorkspaceFolders();
-
-        return vscode.window.showQuickPick(folders, {
-            canPickMany: false,
-            placeHolder: 'Pick a folder to query for'
-        });
-    }
-
-    submitContextQuery(title: string, folderUri: string | undefined, resource: string) {
-        let myExt = getExtension();
-        let myExtDir = myExt?.extensionPath;
-        if (myExtDir !== undefined) {
-            let panel = new WebPanel(myExtDir);
-            let url = `localhost:${LocalClient.port}`;
-            panel.panel.webview.postMessage(
-                {
-                    command: 'search',
-                    serverHost: url,
-                    resource: resource,
-                    folderUri: folderUri
-                }
-            );
-        }
-    }
-
 }
 
 export function deactivate() {
