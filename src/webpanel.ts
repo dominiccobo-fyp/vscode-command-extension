@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from "fs";
 
 export class WebPanel {
     panel!: vscode.WebviewPanel;
@@ -13,7 +14,7 @@ export class WebPanel {
     }
 
     private createWebPanel(title: string, webAppPath: string) {
-        this.panel = vscode.window.createWebviewPanel('markdown.preview', title, vscode.ViewColumn.Two, {
+        this.panel = vscode.window.createWebviewPanel('angular', title, vscode.ViewColumn.Two, {
             enableFindWidget: true,
             enableScripts: true,
             retainContextWhenHidden: true,
@@ -22,30 +23,34 @@ export class WebPanel {
         this.panel.webview.html = this.formulateWebViewContent();
     }
 
+    getScriptPath(scriptFile: string) {
+        return vscode.Uri.file(
+            path.join(this.extensionPath, 'web', scriptFile)
+        );
+    }
+
     formulateWebViewContent() {
 
-        const scriptPathOnDisk = vscode.Uri.file(
-            path.join(this.extensionPath, 'web', 'retrieval.js')
-        );
+        // path to dist folder
+        const appDistPath = path.join(this.extensionPath, 'web');
+        const appDistPathUri = vscode.Uri.file(appDistPath);
 
-        // And the uri we use to load this script in the webview
-        const scriptUri = this.panel.webview.asWebviewUri(scriptPathOnDisk);
+        // path as uri
+        const baseUri = this.panel.webview.asWebviewUri(appDistPathUri);
 
-        return `<!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Results</title>
-            </head>
-            <body>
-                <div id="content"></div>
-                <h2 id="page"></h2>
-            </body>
-            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
-            <script type="text/javascript" src="${scriptUri}" nonce="${this.getNonce()}"></script>
-        </html>`;
+        // get path to index.html file from dist folder
+        const indexPath = path.join(appDistPath, 'index.html');
+
+        // read index file from file system
+        let indexHtml = fs.readFileSync(indexPath, { encoding: 'utf8' });
+
+        // update the base URI tag
+        indexHtml = indexHtml.replace('<base href="/">', `<base href="${String(baseUri)}/">`);
+        console.log(indexHtml);
+
+        return indexHtml;
+
+
     }
 
     getNonce() {
