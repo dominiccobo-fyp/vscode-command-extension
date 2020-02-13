@@ -7,6 +7,9 @@
 	"engines": {
 		"vscode": "^1.40.0"
 	},
+	"repository": {
+		"url": "https://github.com/dominiccobo-fyp/vscode-command-extension"
+	},
 	"categories": [
 		"Other"
 	],
@@ -60,9 +63,10 @@
 		]
 	},
 	"scripts": {
-		"vscode:prepublish": "npm run downloadJar && npm run compile",
-		"compile": "tsc -p ./",
-		"watch": "tsc -watch -p ./",
+		"build-webapp-prod": "( cd webSrc && npm install && npm run build --prod )",
+		"vscode:prepublish": "npm run downloadJar && npm run compile && npm run build-webapp-prod",
+		"compile": "tsc -p ./src/tsconfig.json",
+		"watch": "tsc -watch -p ./src",
 		"pretest": "npm run compile",
 		"test": "node ./out/test/runTest.js",
 		"downloadJar": "node downloadJar.js",
