@@ -702,7 +702,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   /***/
   function _(module, exports, __webpack_require__) {
     module.exports = __webpack_require__(
-    /*! /home/dom/WebstormProjects/untitled1/src/main.ts */
+    /*! /home/dom/Workspace/fyp/vscode-command-extension/webSrc/src/main.ts */
     "./src/main.ts");
     /***/
   }

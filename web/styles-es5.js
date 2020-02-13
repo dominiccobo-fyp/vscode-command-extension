@@ -353,7 +353,7 @@
   /***/
   function _(module, exports, __webpack_require__) {
     module.exports = __webpack_require__(
-    /*! /home/dom/WebstormProjects/untitled1/src/styles.css */
+    /*! /home/dom/Workspace/fyp/vscode-command-extension/webSrc/src/styles.css */
     "./src/styles.css");
     /***/
   }
