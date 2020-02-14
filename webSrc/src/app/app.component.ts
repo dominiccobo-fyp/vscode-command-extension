@@ -5,6 +5,7 @@ import {Component, ComponentFactoryResolver, HostListener, OnInit, ViewChild} fr
   template: `
     <div>
       <app-work-items [fileUri]="fileUri" [connectorUrl]="host" *ngIf="resource ==='workItems'">Loading app work items</app-work-items>
+      <app-experts [fileUri]="fileUri" [connectorUrl]="host" *ngIf="resource ==='experts'"></app-experts>
     </div>
   `,
   styleUrls: ['./app.component.css']
@@ -20,8 +21,6 @@ export class AppComponent implements OnInit {
   onMessage(event) {
     const message = event.data; // The json data that the extension sent
 
-    // TODO:
-    console.log('test!');
     switch (message.command) {
       case 'search':
         this.host = message.serverHost;

@@ -6,13 +6,15 @@ import { AppComponent } from './app.component';
 import { WorkItemsComponent } from './work-items/work-items.component';
 import { ToMarkdownPipe } from './toMarkdown.pipe';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { ExpertsComponent } from './experts/experts.component';
 
 
 @NgModule({
   declarations: [
     AppComponent,
     WorkItemsComponent,
-    ToMarkdownPipe
+    ToMarkdownPipe,
+    ExpertsComponent
   ],
   imports: [
     BrowserModule,
