@@ -1,10 +1,11 @@
 import {Component, EventEmitter, Input, OnInit} from '@angular/core';
 import {WorkItem} from './work-item';
-import {delay, switchMap, tap} from 'rxjs/operators';
+import {catchError, delay, switchMap, tap} from 'rxjs/operators';
 import {HttpClient} from '@angular/common/http';
-import {Observable} from 'rxjs';
+import {Observable, of} from 'rxjs';
 import {environment} from '../../environments/environment';
 import {PresentationSource} from "../presentation-source";
+import {WebViewApi} from "../web-view-api";
 
 class PreFetchResponse {
   constructor(readonly identifier: string, readonly message: string) {}
@@ -25,6 +26,7 @@ class PreFetchResponse {
 export class WorkItemsComponent implements OnInit, PresentationSource {
 
   @Input() payload: any;
+  @Input() containerAPI: WebViewApi;
 
   currentPage = 0;
   workItems: WorkItem[] = [];
@@ -57,15 +59,17 @@ export class WorkItemsComponent implements OnInit, PresentationSource {
   private fetchWorkItems(): Observable<WorkItem[]> {
     return this.http.get<PreFetchResponse>(`http://${this.getUrl()}/workItems?uri=${(this.getFileUri())}`)
       .pipe(
-        tap(result => {
-          console.log(result.identifier);
+        catchError(err  => {
+          this.containerAPI.showErrorNotification("Could queue request for work items.", err);
+          return [];
         }),
         delay(2000),
         switchMap((value) => {
             this.currentIdentifier = value;
             return this.fetchResults(value);
           }
-        ));
+        )
+      );
   }
 
   private getFileUri() {
@@ -73,11 +77,13 @@ export class WorkItemsComponent implements OnInit, PresentationSource {
   }
 
   fetchResults(value: PreFetchResponse) {
-    return this.http.get<WorkItem[]>(`http://${(this.getUrl())}/workItems/${value.identifier}?page=${this.currentPage}`).pipe(
-      tap(result => {
-        console.log(result);
-      })
-    );
+    return this.http.get<WorkItem[]>(`http://${(this.getUrl())}/workItems/${value.identifier}?page=${this.currentPage}`)
+      .pipe(
+        catchError(err => {
+          this.containerAPI.showErrorNotification(`Failed to retrieve work items from aggregate ${value.identifier}`, err);
+          return of([]);
+        })
+      );
   }
 
   private getUrl() {

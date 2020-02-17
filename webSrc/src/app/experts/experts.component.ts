@@ -1,9 +1,10 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {Observable} from "rxjs";
-import {delay, switchMap, tap} from "rxjs/operators";
+import {catchError, delay, switchMap, tap} from "rxjs/operators";
 import {Expert, ContactDetails, ExpertTopic} from "./expert";
 import {PresentationSource} from "../presentation-source";
+import {WebViewApi} from "../web-view-api";
 
 @Component({
   selector: 'app-experts',
@@ -31,6 +32,7 @@ import {PresentationSource} from "../presentation-source";
 export class ExpertsComponent implements OnInit, PresentationSource {
 
   @Input() payload: any;
+  @Input() containerAPI: WebViewApi;
 
   currentPage = 0;
   experts: Expert[] = [];
@@ -63,8 +65,9 @@ export class ExpertsComponent implements OnInit, PresentationSource {
   private fetchWorkItems(): Observable<Expert[]> {
     return this.queueQueryRequest()
       .pipe(
-        tap(result => {
-          console.log(result.identifier);
+        catchError(err => {
+          this.containerAPI.showErrorNotification(`Could not queue query request experts`, err);
+          return [];
         }),
         delay(1000),
         switchMap((value) => {
@@ -88,6 +91,10 @@ export class ExpertsComponent implements OnInit, PresentationSource {
 
   fetchResults(value: PreFetchResponse) {
     return this.http.get<Expert[]>(`http://${this.getUrl()}/experts/${value.identifier}?page=${this.currentPage}`).pipe(
+      catchError(err => {
+        this.containerAPI.showErrorNotification(`Failed to retrieve experts from aggregate ${value.identifier}`, err);
+        return [];
+      }),
       tap(result => {
         console.log(result);
       })

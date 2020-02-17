@@ -21,6 +21,13 @@ export class WebPanel {
             localResourceRoots: [vscode.Uri.file(webAppPath)]
         });
         this.panel.webview.html = this.formulateWebViewContent();
+        this.panel.webview.onDidReceiveMessage(
+            message => {
+                if (message.hasOwnProperty('notification')) {
+                    vscode.window.showInformationMessage(message.notification.message);
+                }
+            }
+        )
     }
 
     getScriptPath(scriptFile: string) {
@@ -46,8 +53,6 @@ export class WebPanel {
 
         // update the base URI tag
         indexHtml = indexHtml.replace('<base href="/">', `<base href="${String(baseUri)}/">`);
-        console.log(indexHtml);
-
         return indexHtml;
 
 
