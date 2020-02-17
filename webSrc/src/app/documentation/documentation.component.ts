@@ -1,39 +1,30 @@
 import {Component, Input, OnInit} from '@angular/core';
+import {Expert} from "../experts/expert";
 import {HttpClient} from "@angular/common/http";
 import {Observable} from "rxjs";
 import {delay, switchMap, tap} from "rxjs/operators";
-import {Expert, ContactDetails, ExpertTopic} from "./expert";
+import {Documentation} from "./documentation";
 import {PresentationSource} from "../presentation-source";
 
 @Component({
-  selector: 'app-experts',
+  selector: 'app-documentation',
   template: `
     <div class="results" infinite-scroll (scrolled)="onScrolledDown()" (scrolledUp)="onScrolledUp()">
-      <div *ngFor="let expert of experts">
-        <h1>{{expert.expertName}}</h1>
-        <h4>Contact</h4>
-        <ul>
-          <li *ngFor="let detail of expert.contactDetails">
-            {{ detail.meansName }} - {{ detail.details }}
-          </li>
-        </ul>
-        <h4>Expert on:</h4>
-        <ul>
-          <li *ngFor="let topic of expert.expertTopics">
-            {{ topic.expertTopic }} - {{ topic.details }}
-          </li>
-        </ul>
+      <div *ngFor="let doc of documentation">
+        <h1><a href="{{doc.link}}">{{ doc.title }}</a></h1>
+        <div><span *ngFor="let topic of doc.topic">{{topic}} | </span></div>
+        <div [innerHTML]="doc.content | docSanitiser"></div>
       </div>
     </div>
   `,
   styles: []
 })
-export class ExpertsComponent implements OnInit, PresentationSource {
+export class DocumentationComponent implements OnInit, PresentationSource {
 
   @Input() payload: any;
 
   currentPage = 0;
-  experts: Expert[] = [];
+  documentation: Documentation[] = [];
   currentIdentifier: PreFetchResponse;
 
   constructor(private http: HttpClient) {}
@@ -43,9 +34,9 @@ export class ExpertsComponent implements OnInit, PresentationSource {
   }
 
   private updatePageContent() {
-    this.getWorkItems().subscribe(items => items.forEach(
+    this.getDocumentationItems().subscribe(items => items.forEach(
       item => {
-        this.experts.push(item);
+        this.documentation.push(item);
       }
     ));
   }
@@ -60,13 +51,13 @@ export class ExpertsComponent implements OnInit, PresentationSource {
     console.log('scrolled up');
   }
 
-  private fetchWorkItems(): Observable<Expert[]> {
+  private fetchDocumentation(): Observable<Documentation[]> {
     return this.queueQueryRequest()
       .pipe(
         tap(result => {
           console.log(result.identifier);
         }),
-        delay(1000),
+        delay(2000),
         switchMap((value) => {
             this.currentIdentifier = value;
             return this.fetchResults(value);
@@ -75,7 +66,11 @@ export class ExpertsComponent implements OnInit, PresentationSource {
   }
 
   private queueQueryRequest() {
-    return this.http.get<PreFetchResponse>(`http://${(this.getUrl())}/experts?uri=${(this.getFileUri())}`);
+    return this.http.get<PreFetchResponse>(`http://${(this.getUrl())}/documentation?uri=${(this.getFileUri())}&query=${(this.getSearchTerm())}`);
+  }
+
+  private getSearchTerm() {
+    return this.payload.searchTerm;
   }
 
   private getFileUri() {
@@ -87,18 +82,18 @@ export class ExpertsComponent implements OnInit, PresentationSource {
   }
 
   fetchResults(value: PreFetchResponse) {
-    return this.http.get<Expert[]>(`http://${this.getUrl()}/experts/${value.identifier}?page=${this.currentPage}`).pipe(
+    return this.http.get<Documentation[]>(`http://${this.getUrl()}/documentation/${value.identifier}?page=${this.currentPage}`).pipe(
       tap(result => {
         console.log(result);
       })
     );
   }
 
-  getWorkItems(): Observable<Expert[]> {
+  getDocumentationItems(): Observable<Documentation[]> {
     if (this.currentIdentifier !== undefined) {
       return this.fetchResults(this.currentIdentifier);
     } else {
-      return this.fetchWorkItems();
+      return this.fetchDocumentation();
     }
   }
 }

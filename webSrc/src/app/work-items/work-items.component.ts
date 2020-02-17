@@ -4,6 +4,7 @@ import {delay, switchMap, tap} from 'rxjs/operators';
 import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {environment} from '../../environments/environment';
+import {PresentationSource} from "../presentation-source";
 
 class PreFetchResponse {
   constructor(readonly identifier: string, readonly message: string) {}
@@ -21,10 +22,9 @@ class PreFetchResponse {
   `,
   styles: []
 })
-export class WorkItemsComponent implements OnInit {
+export class WorkItemsComponent implements OnInit, PresentationSource {
 
-  @Input() fileUri: string;
-  @Input() connectorUrl: string;
+  @Input() payload: any;
 
   currentPage = 0;
   workItems: WorkItem[] = [];
@@ -55,7 +55,7 @@ export class WorkItemsComponent implements OnInit {
   }
 
   private fetchWorkItems(): Observable<WorkItem[]> {
-    return this.http.get<PreFetchResponse>(`http://${this.connectorUrl}/workItems?uri=${this.fileUri}`)
+    return this.http.get<PreFetchResponse>(`http://${this.getUrl()}/workItems?uri=${(this.getFileUri())}`)
       .pipe(
         tap(result => {
           console.log(result.identifier);
@@ -68,12 +68,20 @@ export class WorkItemsComponent implements OnInit {
         ));
   }
 
+  private getFileUri() {
+    return this.payload.fileUri;
+  }
+
   fetchResults(value: PreFetchResponse) {
-    return this.http.get<WorkItem[]>(`http://${this.connectorUrl}/workItems/${value.identifier}?page=${this.currentPage}`).pipe(
+    return this.http.get<WorkItem[]>(`http://${(this.getUrl())}/workItems/${value.identifier}?page=${this.currentPage}`).pipe(
       tap(result => {
         console.log(result);
       })
     );
+  }
+
+  private getUrl() {
+    return this.payload.connectorUrl;
   }
 
   getWorkItems(): Observable<WorkItem[]> {

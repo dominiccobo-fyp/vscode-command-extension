@@ -7,6 +7,9 @@ import { WorkItemsComponent } from './work-items/work-items.component';
 import { ToMarkdownPipe } from './toMarkdown.pipe';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { ExpertsComponent } from './experts/experts.component';
+import { DocumentationComponent } from './documentation/documentation.component';
+import { DocSanitiserPipe } from './doc-sanitiser.pipe';
+import { PresentationSourceDirective } from './presentation-source.directive';
 
 
 @NgModule({
@@ -14,7 +17,10 @@ import { ExpertsComponent } from './experts/experts.component';
     AppComponent,
     WorkItemsComponent,
     ToMarkdownPipe,
-    ExpertsComponent
+    ExpertsComponent,
+    DocumentationComponent,
+    DocSanitiserPipe,
+    PresentationSourceDirective
   ],
   imports: [
     BrowserModule,
