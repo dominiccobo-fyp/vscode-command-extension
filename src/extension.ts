@@ -4,22 +4,26 @@ import * as vscode from 'vscode';
 import { WebPanel } from './webpanel';
 import { spawn } from 'child_process';
 import { Commands, getWorkspaceFolders } from './Commands';
+import {OutputChannel} from "vscode";
 
+let outputChannel: OutputChannel | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
 
-    const client = new LocalClient();
+    outputChannel = vscode.window.createOutputChannel('GCS');
+    const client = new LocalClient(outputChannel);
     new Commands(`localhost:${LocalClient.port}`, context).registerCommands();
     const healthProbe = new HealthProbe(client);
     healthProbe.getEventEmitter().on(HealthProbe.READY, () => {
         // TODO: do something on ready...
-        vscode.window.showInformationMessage('Connected to local client');
+        vscode.window.showInformationMessage('Connected to GCS Daemon');
     });
 
     healthProbe.getEventEmitter().on(HealthProbe.DOWN, () => {
         // TODO: do something on ready...
-        vscode.window.showWarningMessage('Disconnected from local client.');
+        vscode.window.showWarningMessage('Disconnected from GCS Daemon.');
     });
+
 
     onServerReady(healthProbe, client);
 }
@@ -53,7 +57,7 @@ function updateServerCache(healthProbe: HealthProbe, localClient: LocalClient) {
 export class LocalClient {
     static port: number = 30241;
 
-    constructor() {
+    constructor(private outputChannel: vscode.OutputChannel) {
         this.start();
     }
 
@@ -76,7 +80,7 @@ export class LocalClient {
 
     private registerProcessCloseHandler(server: any) {
         server.on('close', (code: any) => {
-            console.log(`child process exited with code ${code}`);
+            this.outputChannel?.appendLine(`child process exited with code ${code}`);
             if(code === 1) {
                 vscode.window.showWarningMessage("Server was already running. Using existing instance.");
             }
@@ -85,13 +89,13 @@ export class LocalClient {
 
     private connectStandardError(server: any) {
         server.stderr.on('data', (data: any) => {
-            console.error(`${data}`);
+            this.outputChannel?.append(String(data));
         });
     }
 
     private connectStardardOut(server: any) {
         server.stdout.on('data', (data: any) => {
-            console.log(`${data}`);
+            this.outputChannel?.append(String(data));
         });
     }
 
