@@ -20,7 +20,7 @@ jobs:
     - run: npm install
     - run: npm install --save-dev
     - run: npm install -g vsce
-    - run: npm run vsce:prepublish
+    - run: npm run vscode:prepublish
     - run: npm run build-extension
     - run: npm test
       env:
