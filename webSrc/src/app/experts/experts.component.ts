@@ -9,8 +9,12 @@ import {WebViewApi} from "../web-view-api";
 @Component({
   selector: 'app-experts',
   template: `
+    <div>
+      <button (click)="reloadContent()">Reload items</button>
+      <input style="margin-left: 20px; width:200px" type="search" placeholder="Filter text" [(ngModel)]="filterTerm"/>
+    </div>
     <div class="results" infinite-scroll (scrolled)="onScrolledDown()" (scrolledUp)="onScrolledUp()">
-      <div *ngFor="let expert of experts">
+      <div *ngFor="let expert of getItemsToShow()">
         <h1>{{expert.expertName}}</h1>
         <h4>Contact</h4>
         <ul>
@@ -37,6 +41,7 @@ export class ExpertsComponent implements OnInit, PresentationSource {
   currentPage = 0;
   experts: Expert[] = [];
   currentIdentifier: PreFetchResponse;
+  filterTerm: string = '';
 
   constructor(private http: HttpClient) {}
 
@@ -44,7 +49,18 @@ export class ExpertsComponent implements OnInit, PresentationSource {
     this.updatePageContent();
   }
 
-  private updatePageContent() {
+  getItemsToShow(): Expert[] {
+    let lcFilterTerm = this.filterTerm.toLocaleLowerCase();
+    return this.experts.filter(
+      item => {
+        return (item.expertTopics.join(',').toLocaleLowerCase().includes(lcFilterTerm) ||
+          item.expertName.toLocaleLowerCase().includes(lcFilterTerm) ||
+          item.contactDetails.join(',').toLocaleLowerCase().includes(lcFilterTerm));
+      }
+    )
+  }
+
+  updatePageContent() {
     this.getWorkItems().subscribe(items => items.forEach(
       item => {
         this.experts.push(item);
@@ -107,6 +123,12 @@ export class ExpertsComponent implements OnInit, PresentationSource {
     } else {
       return this.fetchWorkItems();
     }
+  }
+
+  reloadContent() {
+    this.currentPage = 0;
+    this.experts = [];
+    this.updatePageContent();
   }
 }
 

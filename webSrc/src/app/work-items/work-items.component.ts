@@ -3,7 +3,6 @@ import {WorkItem} from './work-item';
 import {catchError, delay, switchMap, tap} from 'rxjs/operators';
 import {HttpClient} from '@angular/common/http';
 import {Observable, of} from 'rxjs';
-import {environment} from '../../environments/environment';
 import {PresentationSource} from "../presentation-source";
 import {WebViewApi} from "../web-view-api";
 
@@ -14,8 +13,12 @@ class PreFetchResponse {
 @Component({
   selector: 'app-work-items',
   template: `
+    <div>
+      <button (click)="reloadPageContent()">Reload items</button>
+      <input style="margin-left: 20px; width:200px" type="search" placeholder="Filter text" [(ngModel)]="filterTerm"/>
+    </div>
     <div class="results" infinite-scroll (scrolled)="onScrolledDown()" (scrolledUp)="onScrolledUp()">
-      <div *ngFor="let workItem of workItems">
+      <div *ngFor="let workItem of getItemsToShow()">
         <h1>{{workItem.title}}</h1>
         <div [innerHTML]="workItem.body | toMarkdown "></div>
       </div>
@@ -31,6 +34,16 @@ export class WorkItemsComponent implements OnInit, PresentationSource {
   currentPage = 0;
   workItems: WorkItem[] = [];
   currentIdentifier: PreFetchResponse;
+  filterTerm: string  = "";
+
+  getItemsToShow(): WorkItem[] {
+    return this.workItems.filter(value => this.shouldFilter(value));
+  }
+
+  shouldFilter(item: WorkItem) {
+    return item.title.toLocaleLowerCase().includes(this.filterTerm.toLocaleLowerCase()) ||
+      item.body.toLocaleLowerCase().includes(this.filterTerm.toLocaleLowerCase());
+  }
 
   constructor(private http: HttpClient) {}
 
@@ -38,7 +51,7 @@ export class WorkItemsComponent implements OnInit, PresentationSource {
     this.updatePageContent();
   }
 
-  private updatePageContent() {
+  updatePageContent() {
     this.getWorkItems().subscribe(items => items.forEach(
       item => {
         this.workItems.push(item);
@@ -47,14 +60,11 @@ export class WorkItemsComponent implements OnInit, PresentationSource {
   }
 
   onScrolledDown() {
-    console.log('scrolled down');
     this.currentPage++;
     this.updatePageContent();
   }
 
-  onScrolledUp() {
-    console.log('scrolled up');
-  }
+  onScrolledUp() {}
 
   private fetchWorkItems(): Observable<WorkItem[]> {
     return this.http.get<PreFetchResponse>(`http://${this.getUrl()}/workItems?uri=${(this.getFileUri())}`)
@@ -96,5 +106,11 @@ export class WorkItemsComponent implements OnInit, PresentationSource {
     } else {
       return this.fetchWorkItems();
     }
+  }
+
+  reloadPageContent() {
+    this.currentPage = 0;
+    this.workItems = [];
+    this.updatePageContent();
   }
 }

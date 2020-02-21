@@ -10,6 +10,7 @@ import { ExpertsComponent } from './experts/experts.component';
 import { DocumentationComponent } from './documentation/documentation.component';
 import { DocSanitiserPipe } from './doc-sanitiser.pipe';
 import { PresentationSourceDirective } from './presentation-source.directive';
+import {FormsModule} from "@angular/forms";
 
 
 @NgModule({
@@ -25,7 +26,8 @@ import { PresentationSourceDirective } from './presentation-source.directive';
   imports: [
     BrowserModule,
     HttpClientModule,
-    InfiniteScrollModule
+    InfiniteScrollModule,
+    FormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

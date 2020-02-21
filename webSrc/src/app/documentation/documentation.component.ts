@@ -1,7 +1,7 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {Observable} from "rxjs";
-import {catchError, delay, switchMap, tap} from "rxjs/operators";
+import {catchError, delay, filter, switchMap, tap} from "rxjs/operators";
 import {Documentation} from "./documentation";
 import {PresentationSource} from "../presentation-source";
 import {WebViewApi} from "../web-view-api";
@@ -9,8 +9,12 @@ import {WebViewApi} from "../web-view-api";
 @Component({
   selector: 'app-documentation',
   template: `
+    <div>
+      <button (click)="reloadContent()">Reload items</button>
+      <input style="margin-left: 20px; width:200px" type="search" placeholder="Filter text" [(ngModel)]="filterTerm"/>
+    </div>
     <div class="results" infinite-scroll (scrolled)="onScrolledDown()" (scrolledUp)="onScrolledUp()">
-      <div *ngFor="let doc of documentation">
+      <div *ngFor="let doc of getItemsToShow()">
         <h1><a href="{{doc.link}}">{{ doc.title }}</a></h1>
         <div><span *ngFor="let topic of doc.topic">{{topic.topic}} | </span></div>
         <div [innerHTML]="doc.content | docSanitiser"></div>
@@ -27,6 +31,7 @@ export class DocumentationComponent implements OnInit, PresentationSource {
   currentPage = 0;
   documentation: Documentation[] = [];
   currentIdentifier: PreFetchResponse;
+  filterTerm: string = '';
 
   constructor(private http: HttpClient) {}
 
@@ -91,6 +96,16 @@ export class DocumentationComponent implements OnInit, PresentationSource {
     } else {
       return this.fetchDocumentation();
     }
+  }
+
+  reloadContent() {
+    this.currentPage = 0;
+    this.documentation = [];
+    this.updatePageContent();
+  }
+
+  getItemsToShow() {
+    return this.documentation.filter(item => item.containsFilterTerm(this.filterTerm))
   }
 }
 
