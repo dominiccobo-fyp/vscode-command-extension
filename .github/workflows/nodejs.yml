@@ -20,11 +20,10 @@ jobs:
     - run: npm install
     - run: npm install --save-dev
     - run: npm install -g vsce
-    - run: npm run vscode:prepublish
+    - run: npm run build-extension
       env:
         CI: true
         PROJECT_MAVEN_REPOSITORY: 'https://maven.pkg.github.com/dominiccobo-fyp/context-language-server'
         AZURE_ARTIFACTS_ENV_ACCESS_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-    - run: npm run build-extension
     - run: npm test
 
